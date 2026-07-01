@@ -1,0 +1,477 @@
+/* ===== video-editor.css ===== */
+/* ใช้ร่วมกับ index.html ภายใน #video-tab */
+
+#video-tab .app {
+    display: grid;
+    grid-template-rows: 1fr 220px;
+    height: 100%;
+}
+
+#video-tab .editor {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 12px;
+    padding: 12px;
+    min-height: 0;
+}
+
+#video-tab .preview-wrapper {
+    background: #0e1422;
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #1e2a3a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+#video-tab #previewCanvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background: #000;
+    cursor: pointer;
+}
+
+#video-tab .preview-overlay {
+    position: absolute;
+    bottom: 18px;
+    left: 18px;
+    display: flex;
+    gap: 12px;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(6px);
+    padding: 6px 16px;
+    border-radius: 40px;
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 13px;
+    color: #a0b4e0;
+    flex-wrap: wrap;
+}
+#video-tab .preview-overlay .status { color: #6fcf97; }
+#video-tab .preview-overlay .time-display { color: #cfdfff; font-weight: 500; margin-left: 12px; }
+
+#video-tab .panel {
+    background: #0e1422;
+    border-radius: 18px;
+    padding: 16px;
+    border: 1px solid #1e2a3a;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+}
+
+#video-tab .panel textarea {
+    width: 100%;
+    height: 56px;
+    border-radius: 12px;
+    background: #0b0f1a;
+    border: 1px solid #1e2a3a;
+    color: #e8eeff;
+    padding: 10px 14px;
+    resize: none;
+    font-size: 14px;
+}
+#video-tab .panel textarea:focus { outline: none; border-color: #4f7cff; }
+
+#video-tab .btn-primary {
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #4f7cff, #6c5ce7);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 4px 20px rgba(79,124,255,0.25);
+}
+#video-tab .btn-primary:hover { transform: translateY(-2px); }
+
+#video-tab .tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+#video-tab .tool-btn {
+    background: #141c2e;
+    padding: 8px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #b0c8f0;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: 0.2s;
+}
+#video-tab .tool-btn:hover { background: #1c2842; border-color: #4f7cff66; }
+#video-tab .tool-btn.active { background: #1f2d52; border-color: #4f7cff; }
+
+#video-tab .panel-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+#video-tab .panel-actions button {
+    flex: 1;
+    padding: 8px 6px;
+    border: none;
+    border-radius: 10px;
+    background: #1a2338;
+    color: #b0c8f0;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid #1e2a3a;
+    font-size: 11px;
+    min-width: 60px;
+}
+#video-tab .panel-actions button:hover { background: #24304a; color: #fff; }
+#video-tab .panel-actions button.ml-btn { background: #2a3f7a; border-color: #4f7cff; }
+
+#video-tab .export-progress {
+    display: none;
+    height: 6px;
+    background: #1a2338;
+    border-radius: 4px;
+    overflow: hidden;
+}
+#video-tab .export-progress.visible { display: block; }
+#video-tab .export-progress .bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4f7cff, #22c55e);
+    transition: width 0.3s;
+}
+
+#video-tab .timeline {
+    background: #090d18;
+    border-top: 1px solid #1a2338;
+    display: flex;
+    flex-direction: column;
+}
+#video-tab .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 16px;
+    border-bottom: 1px solid #141c2e;
+    font-size: 12px;
+    color: #4a5a7a;
+    font-weight: 600;
+}
+#video-tab .ruler {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 11px;
+    color: #3a4a6a;
+    border-bottom: 1px solid #141c2e;
+    gap: 6px;
+}
+#video-tab .tracks-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 16px;
+    position: relative;
+}
+#video-tab .track {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 48px;
+    position: relative;
+}
+#video-tab .clip-item {
+    height: 38px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2a3f7a, #1a2d5a);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 11px;
+    color: #c8d8ff;
+    cursor: pointer;
+    border: 1px solid transparent;
+    flex-shrink: 0;
+    transition: 0.2s;
+    position: relative;
+}
+#video-tab .clip-item:hover { border-color: #4f7cff66; }
+#video-tab .clip-item.active { border-color: #4f7cff; box-shadow: 0 0 20px rgba(79,124,255,0.2); }
+#video-tab .clip-item .duration-badge {
+    margin-left: 8px;
+    font-size: 9px;
+    background: rgba(79,124,255,0.2);
+    padding: 0 8px;
+    border-radius: 12px;
+}
+#video-tab .playhead-line {
+    position: absolute;
+    top: 0;
+    left: 0%;
+    width: 2px;
+    height: 100%;
+    background: #ff4757;
+    z-index: 10;
+    pointer-events: none;
+    transition: left 0.05s linear;
+}
+#video-tab .playhead-line::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -5px;
+    width: 12px;
+    height: 12px;
+    background: #ff4757;
+    border-radius: 50%;
+}
+#video-tab .timeline-toolbar {
+    height: 48px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 0 16px;
+    border-top: 1px solid #141c2e;
+    flex-wrap: wrap;
+}
+#video-tab .timeline-toolbar button {
+    background: #141c2e;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    color: #b0c8f0;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #1e2a3a;
+}
+#video-tab .timeline-toolbar button:hover { background: #1c2842; }
+#video-tab .timeline-toolbar .primary { background: #4f7cff; color: #fff; border-color: transparent; }
+#video-tab .timeline-toolbar .ml-btn { background: #2a3f7a; border-color: #4f7cff; }
+#video-tab .timeline-toolbar .spacer { flex: 1; }
+#video-tab .file-upload-btn {
+    background: #2a3f7a;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    border: none;
+}
+#video-tab .file-upload-btn input { display: none; }
+
+#video-tab .model-status {
+    font-size: 11px;
+    color: #6b82b0;
+    padding: 4px 8px;
+    background: #0b0f1a;
+    border-radius: 6px;
+    border: 1px solid #1e2a3a;
+}
+
+/* ===== RESPONSIVE ===== */
+/* สำหรับแท็บเล็ตและมือถือจอใหญ่ */
+@media (max-width: 900px) {
+    #video-tab .editor {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 10px;
+        padding: 10px;
+    }
+    #video-tab .app {
+        grid-template-rows: 1fr 180px;
+    }
+    #video-tab .preview-overlay {
+        font-size: 11px;
+        padding: 4px 12px;
+        gap: 8px;
+        bottom: 12px;
+        left: 12px;
+    }
+    #video-tab .panel {
+        padding: 12px;
+        gap: 8px;
+    }
+    #video-tab .panel textarea {
+        height: 48px;
+        font-size: 13px;
+        padding: 8px 12px;
+    }
+    #video-tab .btn-primary {
+        padding: 10px;
+        font-size: 14px;
+    }
+    #video-tab .tools-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+    }
+    #video-tab .tool-btn {
+        font-size: 11px;
+        padding: 6px;
+    }
+    #video-tab .panel-actions button {
+        font-size: 10px;
+        padding: 6px 4px;
+        min-width: 50px;
+    }
+    #video-tab .timeline-toolbar {
+        height: 44px;
+        padding: 0 10px;
+        gap: 4px;
+    }
+    #video-tab .timeline-toolbar button {
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+    #video-tab .file-upload-btn {
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+    #video-tab .clip-item {
+        height: 32px;
+        font-size: 10px;
+        padding: 0 10px;
+    }
+    #video-tab .clip-item .duration-badge {
+        font-size: 8px;
+        padding: 0 6px;
+    }
+    #video-tab .ruler {
+        height: 24px;
+        font-size: 10px;
+        padding: 0 10px;
+    }
+    #video-tab .timeline-header {
+        font-size: 11px;
+        padding: 2px 12px;
+    }
+    #video-tab .tracks-wrapper {
+        padding: 6px 10px;
+    }
+    #video-tab .track {
+        min-height: 40px;
+        gap: 4px;
+    }
+}
+
+/* สำหรับมือถือเล็ก (< 480px) */
+@media (max-width: 480px) {
+    #video-tab .editor {
+        gap: 6px;
+        padding: 6px;
+    }
+    #video-tab .app {
+        grid-template-rows: 1fr 150px;
+    }
+    #video-tab .preview-overlay {
+        font-size: 10px;
+        padding: 3px 10px;
+        gap: 6px;
+        bottom: 8px;
+        left: 8px;
+        border-radius: 30px;
+    }
+    #video-tab .preview-overlay .time-display {
+        margin-left: 6px;
+        font-size: 10px;
+    }
+    #video-tab .panel {
+        padding: 8px;
+        gap: 6px;
+        border-radius: 14px;
+    }
+    #video-tab .panel textarea {
+        height: 40px;
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 10px;
+    }
+    #video-tab .btn-primary {
+        padding: 8px;
+        font-size: 13px;
+        border-radius: 10px;
+    }
+    #video-tab .tools-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+    }
+    #video-tab .tool-btn {
+        font-size: 10px;
+        padding: 4px;
+        border-radius: 10px;
+    }
+    #video-tab .panel-actions {
+        gap: 4px;
+    }
+    #video-tab .panel-actions button {
+        font-size: 9px;
+        padding: 4px 3px;
+        min-width: 40px;
+        border-radius: 8px;
+    }
+    #video-tab .export-progress {
+        height: 4px;
+    }
+    #video-tab .timeline {
+        border-top-width: 1px;
+    }
+    #video-tab .timeline-header {
+        font-size: 10px;
+        padding: 2px 8px;
+    }
+    #video-tab .ruler {
+        height: 20px;
+        font-size: 9px;
+        padding: 0 8px;
+        gap: 4px;
+    }
+    #video-tab .tracks-wrapper {
+        padding: 4px 8px;
+    }
+    #video-tab .track {
+        min-height: 32px;
+        gap: 3px;
+    }
+    #video-tab .clip-item {
+        height: 28px;
+        font-size: 9px;
+        padding: 0 8px;
+        border-radius: 6px;
+    }
+    #video-tab .clip-item .duration-badge {
+        font-size: 7px;
+        padding: 0 4px;
+        margin-left: 4px;
+    }
+    #video-tab .playhead-line {
+        width: 1.5px;
+    }
+    #video-tab .playhead-line::after {
+        width: 8px;
+        height: 8px;
+        top: -4px;
+        left: -4px;
+    }
+    #video-tab .timeline-toolbar {
+        height: 38px;
+        padding: 0 6px;
+        gap: 3px;
+    }
+    #video-tab .timeline-toolbar button {
+        font-size: 10px;
+        padding: 3px 8px;
+        border-radius: 6px;
+    }
+    #video-tab .file-upload-btn {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    #video-tab .model-status {
+        font-size: 9px;
+        padding: 2px 6px;
+    }
+}

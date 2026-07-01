@@ -1,0 +1,12 @@
+project/
+├── index.html                    # หน้าเว็บหลัก (รวมทุกฟีเจอร์)
+├── css/
+│   ├── video-editor.css          # สไตล์สำหรับ Video Editor
+│   ├── image-editor.css          # สไตล์สำหรับ Image Editor
+│   └── Remove-background-BP.css  # สไตล์สำหรับ Remove BG
+└── js/
+    ├── video-editor.js           # ฟังก์ชันหลัก Video Editor
+    ├── ai-module.js              # AI สำหรับ Video (COCO-SSD + Histogram)
+    ├── image-editor.js           # ฟังก์ชัน Image Editor
+    ├── remove-bg.js              # ฟังก์ชันลบพื้นหลัง (AI)
+    └── script1.js                # เพิ่มโลโก้ใน Remove BG

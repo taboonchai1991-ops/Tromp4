@@ -1,0 +1,368 @@
+============================================================
+            PROJECT STRUCTURE & DOCUMENTATION
+              AI STUDIO — Video, Image & BG Remover
+============================================================
+
+📁 โครงสร้างโฟลเดอร์
+============================================================
+project/
+├── index.html                     # หน้าเว็บหลัก (รวมทุกฟีเจอร์)
+├── css/
+│   ├── video-editor.css           # สไตล์สำหรับ Video Editor
+│   ├── image-editor.css           # สไตล์สำหรับ Image Editor
+│   └── Remove-background-BP.css   # สไตล์สำหรับ Remove BG
+├── js/
+│   ├── video-editor.js            # ฟังก์ชันหลัก Video Editor
+│   ├── ai-module.js               # AI สำหรับ Video (COCO-SSD + Histogram)
+│   ├── image-editor.js            # ฟังก์ชัน Image Editor
+│   ├── remove-bg.js               # ฟังก์ชันลบพื้นหลัง (AI)
+│   └── script1.js                 # เพิ่มโลโก้ใน Remove BG
+└── assets/                        # (โฟลเดอร์สำหรับรูปตัวอย่างเพิ่มเติม)
+
+
+============================================================
+📄 1. index.html – หน้าเว็บหลัก
+============================================================
+หน้าที่:
+- จัดโครงสร้าง UI ทั้งหมด 3 แท็บ (Video, Image, Remove BG)
+- เชื่อมต่อ CSS และ JavaScript ทั้งหมด
+- จัดการการสลับแท็บ (Tab switching)
+- แสดงผล Toast Notification (ข้อความแจ้งเตือน)
+
+โครงสร้างหลัก:
+- <head> : Meta, Title, CSS links, TensorFlow.js, COCO-SSD, Import Map
+- <body> :
+  - .app-container
+    - .tabs (3 ปุ่ม)
+    - #video-tab (Video Editor)
+    - #image-tab (Image Editor)
+    - #bg-tab (Remove BG)
+  - #toast (Toast Notification)
+  - <script src="..."> (โหลด JavaScript ทั้งหมด)
+
+ฟังก์ชันสำคัญใน <script>:
+- สลับแท็บ: document.querySelectorAll('.tab-btn').forEach(...)
+- เริ่มต้นแท็บแรก (Video) อัตโนมัติ: window.addEventListener('DOMContentLoaded', ...)
+
+
+============================================================
+📄 2. css/video-editor.css – สไตล์ Video Editor
+============================================================
+หน้าที่:
+- จัดสไตล์ให้ Video Editor ทั้งหมด
+- ควบคุม Layout, สี, ขนาด, การตอบสนอง (Responsive)
+
+คลาส/ID หลัก:
+- #video-tab .app           : Grid layout หลัก
+- #video-tab .editor        : แบ่งเป็น Preview (ซ้าย) และ Panel (ขวา)
+- #video-tab .preview-wrapper : แสดง Canvas วิดีโอ
+- #video-tab .panel         : แผงควบคุม (Prompt, Effects, In/Out)
+- #video-tab .tools-grid    : ปุ่ม Effect 4 แบบ
+- #video-tab .inout-row     : ช่องใส่ In/Out ตัวเลข
+- #video-tab .timeline      : ไทม์ไลน์ + คลิป
+- #video-tab .clip-item     : แต่ละคลิปบนไทม์ไลน์
+- #video-tab .playhead-line : เส้นตัวชี้ตำแหน่ง
+
+Responsive:
+- @media (max-width: 700px) : ปรับ Layout เป็นแนวตั้ง
+
+
+============================================================
+📄 3. css/image-editor.css – สไตล์ Image Editor
+============================================================
+หน้าที่:
+- จัดสไตล์ให้ Image Editor ทั้งหมด
+- ควบคุม Grid รูปตัวอย่าง, Canvas, Prompt
+
+คลาส/ID หลัก:
+- #image-tab .image-editor-container : Container หลัก
+- #image-tab .canvas-wrapper         : แสดงรูปหลัก
+- #image-tab #grid                   : Grid รูปตัวอย่าง (6 รูป)
+- #image-tab .prompt-area            : ส่วนพิมพ์คำสั่ง
+- #image-tab .chips                  : ปุ่มคำสั่งสำเร็จรูป
+- #image-tab .input-row              : ช่อง Prompt + ปุ่ม Apply
+- #image-tab .upload-area            : ปุ่มอัปโหลดรูป
+
+Responsive:
+- @media (max-width: 700px) : ปรับ Layout
+
+
+============================================================
+📄 4. css/Remove-background-BP.css – สไตล์ Remove BG
+============================================================
+หน้าที่:
+- จัดสไตล์ให้ Remove Background ทั้งหมด
+- ควบคุม Layout, Canvas, ปุ่ม, Slider, Sample Grid
+
+คลาส/ID หลัก:
+- .app-grid          : Grid 2 คอลัมน์ (Controls + Preview)
+- .controls          : แผงควบคุมด้านซ้าย
+- .preview           : แสดง Canvas ด้านขวา
+- .canvas-wrap       : Wrapper ของ Canvas (1:1)
+- .file-wrap         : ปุ่มอัปโหลดไฟล์
+- .color-row         : ตัวเลือกสี + แสดงค่า HEX
+- .slider-row        : Slider ปรับขนาดวัตถุ
+- .btn-remove-bg     : ปุ่มลบพื้นหลัง (AI)
+- .sample-grid       : Grid รูปตัวอย่างพื้นหลัง
+- .toast             : แจ้งเตือนแบบ Popup
+
+Responsive:
+- @media (max-width: 480px) : ปรับ Layout สำหรับมือถือ
+- @media (max-width: 360px) : ปรับเพิ่มเติม
+
+
+============================================================
+📄 5. js/video-editor.js – ฟังก์ชันหลัก Video Editor
+============================================================
+หน้าที่:
+- จัดการการเล่นวิดีโอ (Play/Pause/Seek)
+- ควบคุม Canvas และ Filter
+- ตั้งค่า In/Out Point
+- ตัดเฉพาะช่วง (Trim) พร้อมเสียง
+- ส่งออกวิดีโอ (Export)
+- แสดงผลไทม์ไลน์ (Timeline)
+
+ตัวแปรสำคัญ (State):
+- isPlaying        : สถานะเล่น/หยุด
+- currentFilter    : ค่า Filter ปัจจุบัน
+- inPoint          : จุดเริ่มต้น (วินาที)
+- outPoint         : จุดสิ้นสุด (วินาที)
+- clips            : รายการคลิปบนไทม์ไลน์
+
+ฟังก์ชันหลัก (API):
+- loadVideo(e)                : โหลดวิดีโอจากเครื่อง
+- togglePlay()                : เล่น/หยุดวิดีโอ
+- resetVideo()                : รีเซ็ตวิดีโอไปที่ 0
+- setInPoint()                : ตั้ง In ที่ตำแหน่งปัจจุบัน
+- setOutPoint()               : ตั้ง Out ที่ตำแหน่งปัจจุบัน
+- applyInOutFromInput()       : ตั้ง In/Out จากช่องตัวเลข
+- applyEffect(type)           : ใส่ฟิลเตอร์ (cinematic, fast ฯลฯ)
+- trimToSelection()           : ตัดเฉพาะช่วง In-Out (พร้อมเสียง)
+- exportTrimmed()             : บันทึกเฉพาะช่วง In-Out เป็นไฟล์
+- renderClips(clipData)       : แสดงคลิปบน Timeline
+- getVideo(), getCanvas()     : ให้ AI Module เข้าถึง
+- setStatus(msg)              : เปลี่ยนข้อความสถานะ
+
+ฟังก์ชันภายใน:
+- resizeCanvas()      : ปรับขนาด Canvas ให้พอดี
+- startRenderLoop()   : วนลูปแสดงผล (60fps)
+- buildFilter()       : สร้าง CSS Filter string
+- updateTimeDisplay() : อัปเดตเวลา
+- formatTime(t)       : แปลงวินาทีเป็น mm:ss
+- updatePlayhead()    : อัปเดตตำแหน่ง Playhead
+
+
+============================================================
+📄 6. js/ai-module.js – AI สำหรับ Video
+============================================================
+หน้าที่:
+- ตรวจจับฉากด้วย Histogram (เร็ว)
+- ตรวจจับฉากด้วย COCO-SSD (แม่นยำ)
+- ประมวลผลคำสั่ง Prompt
+- สร้างคำบรรยายจำลอง (Captions)
+
+ตัวแปรสำคัญ:
+- model             : โมเดล COCO-SSD
+- modelLoaded       : สถานะโหลดโมเดล
+- _cachedScenes     : Cache ผลลัพธ์ (ใช้ซ้ำ)
+
+ฟังก์ชันหลัก:
+- loadAIModel()                       : โหลดโมเดล COCO-SSD
+- autoDetectScenesHistogram()         : ตรวจจับฉากด้วย Histogram
+- autoDetectScenesML()                : ตรวจจับฉากด้วย ML (COCO-SSD)
+- runAI()                             : ประมวลผลคำสั่ง Prompt
+- extractNumbersFromPrompt()          : ดึงตัวเลขจากข้อความ (ใช้กับ trim)
+- generateCaptions()                  : สร้างคำบรรยายจำลอง
+
+Prompt Engine (runAI):
+- ตรวจจับคำสั่ง 'trim' + ตัวเลข → ตั้ง In/Out และตัด
+- ตรวจจับ 'cut' / 'ตัด' → เรียก Scene Detection
+- ตรวจจับชื่อฟิลเตอร์ → เรียก applyEffect()
+- ตรวจจับ 'captions' → เรียก generateCaptions()
+- ตรวจจับ 'in' และ 'out' → ตั้ง In/Out
+
+
+============================================================
+📄 7. js/image-editor.js – ฟังก์ชัน Image Editor
+============================================================
+หน้าที่:
+- แสดงและเลือกภาพตัวอย่าง
+- อัปโหลดรูปจากเครื่อง
+- ใส่ฟิลเตอร์ตามคำสั่ง (Prompt)
+- ดาวน์โหลดรูปที่แก้ไขแล้ว
+
+ตัวแปรสำคัญ:
+- ASSETS           : รายการรูปตัวอย่าง 6 รูป
+- currentFilter    : ฟิลเตอร์ปัจจุบัน
+- currentTab       : แท็บที่เลือก (magic/filter/adjust)
+- isProcessing     : กำลังประมวลผล
+- filterHistory    : ประวัติฟิลเตอร์ (Undo)
+
+ฟังก์ชันหลัก:
+- initImageEditor()    : เริ่มต้น Image Editor
+- initGrid()           : สร้าง Grid รูปตัวอย่าง
+- setTab(el, type)     : เปลี่ยนโหมด (Magic/Filter/Adjust)
+- resetImage()         : รีเซ็ตรูปและฟิลเตอร์
+- applyMagic()         : ประมวลผลคำสั่ง Prompt
+- processPrompt(text)  : แปลงข้อความเป็นฟิลเตอร์
+- applyFilter(filterName) : ใส่ฟิลเตอร์ให้รูป
+- downloadImage()      : ดาวน์โหลดรูปเป็น PNG
+- handleUpload(file)   : อัปโหลดรูปจากเครื่อง
+
+ฟิลเตอร์ที่รองรับ (12 แบบ):
+cinematic, vintage, cyberpunk, bw, pastel, dark, bright, warm, cool, contrast, blur, dramatic
+
+
+============================================================
+📄 8. js/remove-bg.js – ฟังก์ชันลบพื้นหลัง
+============================================================
+หน้าที่:
+- อัปโหลดรูปหลักและพื้นหลัง
+- เปลี่ยนสีพื้นหลัง
+- ปรับขนาดวัตถุ (Scale)
+- ลากวัตถุ (Drag)
+- ลบพื้นหลังด้วย AI (ใช้ @imgly/background-removal)
+- ดาวน์โหลดผลลัพธ์
+
+ตัวแปรสำคัญ:
+- W, H           : ขนาด Canvas (1200x1200)
+- mainImage      : รูปหลัก
+- bgImage        : รูปพื้นหลัง
+- mainX, mainY   : ตำแหน่งวัตถุ
+- mainScale      : ขนาดวัตถุ (0-1)
+- mainHasAlpha   : รูปมีอัลฟา (โปร่งใส) หรือไม่
+- isDragging     : กำลังลาก
+
+ฟังก์ชันหลัก:
+- render()                           : วาดภาพลง Canvas
+- getMainDrawParams()                : คำนวณตำแหน่ง/ขนาดวัตถุ
+- checkAlpha(image)                  : ตรวจสอบว่ารูปมีอัลฟาหรือไม่
+- updateScale()                      : ปรับขนาดวัตถุจาก Slider
+- resetPositionAndScale()            : รีเซ็ตตำแหน่ง/ขนาด
+- removeBackgroundFromMain()         : ลบพื้นหลังด้วย AI
+- refineEdges(imageData, radius)     : ปรับขอบให้เนียนขึ้น
+- downloadImage()                    : ดาวน์โหลดเป็น PNG
+- onDragStart/Move/End()             : จัดการการลากวัตถุ
+
+การทำงานของ AI Remove Background:
+1. แปลงรูปเป็น Canvas
+2. ลดขนาดลง (max 512px) เพื่อความเร็ว
+3. เรียกใช้ @imgly/background-removal (โมเดล 'small')
+4. แปลงผลลัพธ์เป็น Image
+5. ปรับขอบให้เนียนขึ้นด้วย Gaussian Blur (refineEdges)
+6. แทนที่รูปหลัก และตั้งค่า mainHasAlpha = true
+7. Render ใหม่
+
+
+============================================================
+📄 9. js/script1.js – เพิ่มโลโก้ใน Remove BG
+============================================================
+หน้าที่:
+- เพิ่มโลโก้ (11.png) ไว้ใต้ปุ่ม "✨ ลบพื้นหลัง (AI)"
+- ไม่มีฟังก์ชันลากการ์ด
+
+การทำงาน:
+1. เพิ่ม CSS ที่จำเป็น (.logo-container, .logo-icon)
+2. รอให้ DOM พร้อม
+3. ค้นหา .controls และ .btn-remove-bg
+4. สร้าง <div class="logo-container"> และ <img class="logo-icon">
+5. แทรกไว้ใต้ปุ่มลบพื้นหลัง
+
+
+============================================================
+🔄 การทำงานร่วมกันของระบบ
+============================================================
+
+1. ผู้ใช้เปิด index.html → แท็บ Video Editor แสดงเป็นค่าเริ่มต้น
+2. คลิกแท็บ → เริ่มต้น Editor ที่เกี่ยวข้อง (ถ้ายังไม่เริ่ม)
+3. แต่ละ Editor มีฟังก์ชันเฉพาะ:
+   - Video Editor: ใช้ video-editor.js + ai-module.js
+   - Image Editor: ใช้ image-editor.js
+   - Remove BG: ใช้ remove-bg.js + script1.js
+4. AI Module (ai-module.js) ถูกเรียกจาก Video Editor เมื่อต้องการตรวจจับฉาก
+5. ทุกฟังก์ชันสามารถแสดง Toast Notification ได้ (ใช้ร่วมกัน)
+6. ระบบรองรับ Responsive (ปรับอัตโนมัติบนมือถือ)
+
+
+============================================================
+⌨️ คีย์ลัดทั้งหมด
+============================================================
+
+ปุ่ม         | ฟังก์ชัน                          | โหมด
+-------------|-----------------------------------|------------
+Space        | เล่น/หยุดวิดีโอ                   | Video
+← / →        | เลื่อนวิดีโอ ±2 วินาที           | Video
+I            | ตั้ง In Point                     | Video
+O            | ตั้ง Out Point                    | Video
+T            | ตัดเฉพาะช่วง (Trim)              | Video
+R            | รีเซ็ต                            | Video / Image
+Ctrl+Enter   | สั่ง AI Auto Edit                 | Video / Image
+1            | ลบพื้นหลัง (AI)                  | Remove BG
+Esc          | ล้างข้อความ Prompt                | Image
+
+
+============================================================
+📌 สรุปฟังก์ชันทั้งหมด
+============================================================
+
+ไฟล์                | ฟังก์ชัน                          | เรียกใช้จาก
+--------------------|-----------------------------------|--------------------
+video-editor.js     | loadVideo()                      | ปุ่มอัปโหลด
+                    | togglePlay()                     | ปุ่ม Play, Space
+                    | setInPoint()                     | ปุ่ม In, I
+                    | setOutPoint()                    | ปุ่ม Out, O
+                    | applyInOutFromInput()            | ปุ่ม "✅ ใช้ค่า"
+                    | applyEffect()                    | ปุ่ม Effect, Prompt
+                    | trimToSelection()                | ปุ่ม Trim, T, Prompt
+                    | exportTrimmed()                  | ปุ่ม Export
+                    | renderClips()                    | AI Module
+ai-module.js        | loadAIModel()                    | ปุ่ม ML
+                    | autoDetectScenesHistogram()      | ปุ่ม Histogram
+                    | autoDetectScenesML()             | ปุ่ม ML, Prompt
+                    | runAI()                          | ปุ่ม AI Auto Edit
+                    | extractNumbersFromPrompt()       | runAI()
+image-editor.js     | initImageEditor()                | คลิกแท็บ
+                    | applyMagic()                     | ปุ่ม Apply, Ctrl+Enter
+                    | processPrompt()                  | applyMagic()
+                    | applyFilter()                    | applyMagic()
+                    | downloadImage()                  | ปุ่ม Download
+remove-bg.js        | render()                         | ทุกฟังก์ชัน
+                    | removeBackgroundFromMain()       | ปุ่ม Remove BG, คีย์ 1
+                    | refineEdges()                    | removeBackgroundFromMain()
+                    | downloadImage()                  | ปุ่ม Download
+script1.js          | init()                           | อัตโนมัติ
+
+
+============================================================
+📱 Responsive Design
+============================================================
+
+- Desktop (> 1024px): แสดง 2 คอลัมน์ (Controls + Preview)
+- Tablet (700-1024px): แสดง 1 คอลัมน์ (Controls อยู่ด้านล่าง)
+- Mobile (< 700px): ทุกส่วนเรียงแนวตั้ง, ปรับขนาดปุ่มและฟอนต์
+- Mobile (< 480px): ปรับเพิ่มเติม, Grid รูปตัวอย่าง 3 คอลัมน์
+- Mobile (< 360px): ปรับฟอนต์และปุ่มให้เล็กลง
+
+
+============================================================
+🔗 External Dependencies
+============================================================
+
+1. TensorFlow.js       : https://cdn.jsdelivr.net/npm/@tensorflow/tfjs
+2. COCO-SSD            : https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd
+3. @imgly/background-removal : https://cdn.jsdelivr.net/npm/@imgly/background-removal/+esm
+
+
+============================================================
+📝 หมายเหตุเพิ่มเติม
+============================================================
+
+- Video Editor ใช้ video.captureStream() เพื่อรวมเสียงในการตัด (Trim) และส่งออก (Export)
+- รองรับเฉพาะเบราว์เซอร์ที่ใช้ Chromium (Chrome, Edge, Opera)
+- ไฟล์ที่ส่งออกเป็นรูปแบบ .webm (VP9 + Opus)
+- Image Editor และ Remove BG รองรับไฟล์รูปภาพทุกประเภท (PNG, JPG, WEBP)
+- ใช้ LocalStorage ยังไม่มีการบันทึกข้อมูล (สามารถเพิ่มเติมได้)
+
+============================================================
+                        END OF DOCUMENT
+============================================================

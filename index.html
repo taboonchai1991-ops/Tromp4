@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Studio — Video, Image & BG Remover</title>
+
+    <!-- CSS ทั้งหมด -->
+    <link rel="stylesheet" href="css/video-editor.css">
+    <link rel="stylesheet" href="css/image-editor.css">
+    <link rel="stylesheet" href="css/Remove-background-BP.css">
+
+    <!-- TensorFlow.js (สำหรับ Video) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@latest" defer></script>
+
+    <!-- Import Map สำหรับ @imgly/background-removal (ใช้ใน remove-bg.js) -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@imgly/background-removal": "https://cdn.jsdelivr.net/npm/@imgly/background-removal/+esm"
+            }
+        }
+    </script>
+
+    <style>
+        /* สไตล์สำหรับแท็บหลัก (เหมือนเดิม) */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0b0f17; color: #f0f4ff; height: 100vh; overflow: hidden; }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: #0a0e1a;
+            border-bottom: 1px solid #1a2338;
+            padding: 0 20px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: #6b82b0;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: #b0c8f0; }
+        .tab-btn.active { color: #fff; border-bottom-color: #4f7cff; }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+        }
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* สำหรับ BG Remover เราใช้ flex เต็ม */
+        .tab-content#bg-tab {
+            padding: 0;
+            background: #0b0e14;
+        }
+        .tab-content#bg-tab.active {
+            display: flex;
+        }
+
+        @media (max-width: 600px) {
+            .tab-btn { padding: 8px 12px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <!-- แท็บ -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="video">🎬 Video Editor</button>
+        <button class="tab-btn" data-tab="image">🖼️ Image Editor</button>
+        <button class="tab-btn" data-tab="bg">🖌️ Remove BG</button>
+    </div>
+
+    <!-- ===== TAB 1: VIDEO ===== -->
+    <div id="video-tab" class="tab-content active">
+        <div class="app">
+            <div class="editor">
+                <div class="preview-wrapper">
+                    <canvas id="previewCanvas"></canvas>
+                    <div class="preview-overlay">
+                        <span class="status" id="statusText">📂 อัปโหลดวิดีโอ</span>
+                        <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+                        <span class="model-status" id="modelStatus">🤖 รอโหลดโมเดล...</span>
+                    </div>
+                </div>
+                <div class="panel">
+                    <textarea id="promptVideo" placeholder="พิมพ์คำสั่ง AI… เช่น 'trim 5.0 5.10' หรือ 'cut cinematic'"></textarea>
+                    <button class="btn-primary" onclick="window.runAI()">✨ AI Auto Edit</button>
+                    <div class="tools-grid">
+                        <div class="tool-btn" data-effect="cinematic" onclick="window.applyEffect('cinematic')">🎬 Cinematic</div>
+                        <div class="tool-btn" data-effect="fast" onclick="window.applyEffect('fast')">⚡ Fast</div>
+                        <div class="tool-btn" data-effect="vlog" onclick="window.applyEffect('vlog')">🎥 Vlog</div>
+                        <div class="tool-btn" data-effect="smooth" onclick="window.applyEffect('smooth')">🌊 Smooth</div>
+                    </div>
+                    <div class="inout-row">
+                        <div class="inout-group">
+                            <label>📍 In</label>
+                            <input type="number" id="inPointInput" step="0.01" min="0" value="0" />
+                            <span>วินาที</span>
+                        </div>
+                        <div class="inout-group">
+                            <label>📍 Out</label>
+                            <input type="number" id="outPointInput" step="0.01" min="0" value="10" />
+                            <span>วินาที</span>
+                        </div>
+                        <button onclick="window.applyInOutFromInput()" class="apply-inout-btn">✅ ใช้ค่า</button>
+                    </div>
+                    <div class="panel-actions">
+                        <button onclick="window.setInPoint()">📍 In (ปัจจุบัน)</button>
+                        <button onclick="window.setOutPoint()">📍 Out (ปัจจุบัน)</button>
+                        <button onclick="window.trimToSelection()" class="trim-btn">✂️ ตัดเฉพาะช่วง</button>
+                        <button onclick="window.exportTrimmed()">💾 บันทึก</button>
+                        <button class="ml-btn" onclick="window.autoDetectScenesML()">🧠 ML</button>
+                        <button onclick="window.autoDetectScenesHistogram()">📊 Histogram</button>
+                    </div>
+                    <div class="export-progress" id="exportProgress">
+                        <div class="bar" id="exportBar"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="timeline">
+                <div class="timeline-header">
+                    <span>📽 ไทม์ไลน์</span>
+                    <span id="clipCount">0 คลิป</span>
+                </div>
+                <div class="ruler">
+                    <span>0s</span> <span>│</span> <span>5s</span> <span>│</span> <span>10s</span> <span>│</span> <span>15s</span> <span>│</span> <span>20s</span>
+                </div>
+                <div class="tracks-wrapper" id="tracksWrapper">
+                    <div class="track" id="track">
+                        <div class="playhead-line" id="playhead" style="left:0%;"></div>
+                    </div>
+                </div>
+                <div class="timeline-toolbar">
+                    <button onclick="window.togglePlay()">▶ Play</button>
+                    <button onclick="window.resetVideo()">⟲ Reset</button>
+                    <label class="file-upload-btn">
+                        📁 อัปโหลดวิดีโอ
+                        <input type="file" accept="video/*" onchange="window.loadVideo(event)">
+                    </label>
+                    <button class="ml-btn" onclick="window.autoDetectScenesML()">🧠 ML</button>
+                    <span class="spacer"></span>
+                    <span style="font-size:11px;color:#4a5a7a;">Space ⏎ | ← →</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB 2: IMAGE ===== -->
+    <div id="image-tab" class="tab-content">
+        <div class="image-editor-container">
+            <div class="image-editor-top">
+                <div class="canvas-wrapper" id="canvasWrap">
+                    <img id="canvasImg" src="https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg" alt="Image" />
+                    <div class="image-overlay">
+                        <span id="imgLabel">Landscape</span>
+                        <span id="filterLabel">🎨 Original</span>
+                    </div>
+                </div>
+                <div class="grid-wrapper">
+                    <div id="grid"></div>
+                    <div class="grid-footer">
+                        <span id="assetCount">0</span> รูป
+                        <button onclick="window.resetImage()" class="reset-btn">↺ Reset</button>
+                        <button onclick="window.downloadImage()" class="download-btn">💾 Download</button>
+                    </div>
+                </div>
+            </div>
+            <div class="image-editor-bottom">
+                <div class="prompt-area">
+                    <div class="tabs-mini">
+                        <span class="tab active" onclick="window.setTab(this, 'magic')">✨ Magic</span>
+                        <span class="tab" onclick="window.setTab(this, 'filter')">🎨 Filter</span>
+                        <span class="tab" onclick="window.setTab(this, 'adjust')">⚙️ Adjust</span>
+                    </div>
+                    <div class="input-row">
+                        <textarea id="promptImage" placeholder="พิมพ์สิ่งที่ต้องการ… เช่น 'ทำให้เป็นแนวภาพยนตร์'"></textarea>
+                        <button id="applyBtn" onclick="window.applyMagic()"><span>✨</span> Apply</button>
+                    </div>
+                    <div class="chips">
+                        <span class="chip" data-prompt="cinematic vibe">🎬 Cinematic</span>
+                        <span class="chip" data-prompt="vintage retro look">📻 Vintage</span>
+                        <span class="chip" data-prompt="cyberpunk neon">💜 Cyberpunk</span>
+                        <span class="chip" data-prompt="pastel dreamy">🌸 Pastel</span>
+                        <span class="chip" data-prompt="dark moody">🌙 Dark</span>
+                        <span class="chip" data-prompt="bright sunny">☀️ Bright</span>
+                    </div>
+                    <div class="char-count" id="charCount">0 / 200</div>
+                </div>
+                <div class="upload-area">
+                    <label class="upload-btn">
+                        📤 อัปโหลดรูป
+                        <input type="file" id="fileInput" accept="image/*">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB 3: REMOVE BACKGROUND (ปรับปรุงข้อความแล้ว) ===== -->
+    <div id="bg-tab" class="tab-content">
+        <div class="app">
+            <div class="app-grid">
+                <!-- ฝั่งซ้าย: ควบคุม -->
+                <div class="controls">
+                    <h1>
+                        <span class="logo-icon">🧹</span>
+                        ลบพื้นหลังอัจฉริยะ
+                    </h1>
+                    <div class="sub">ใช้ AI ลบพื้นหลังรูปภาพ 1 คลิก</div>
+
+                    <div class="group">
+                        <label>📷 รูปหลัก</label>
+                        <div class="file-wrap">
+                            <input type="file" id="mainImage" accept="image/*">
+                            <span class="file-btn"><span class="icon">📂</span> เลือกรูปหลัก</span>
+                            <span class="file-name" id="mainFileName">ยังไม่เลือกรูป</span>
+                        </div>
+                    </div>
+
+                    <div class="group">
+                        <label>🖼️ พื้นหลัง <span class="badge">รูป / สี</span></label>
+                        <div class="file-wrap">
+                            <input type="file" id="bgImage" accept="image/*">
+                            <span class="file-btn"><span class="icon">📂</span> เลือกพื้นหลัง</span>
+                            <span class="file-name" id="bgFileName">ไม่ต้องก็ได้</span>
+                        </div>
+                        <div class="color-row" style="margin-top: 12px;">
+                            <input type="color" id="bgColor" value="#1a2338">
+                            <span class="color-hex" id="colorHex">#1a2338</span>
+                        </div>
+                    </div>
+
+                    <div class="group">
+                        <label>🔍 ขนาดวัตถุ</label>
+                        <div class="slider-row">
+                            <input type="range" id="scaleSlider" min="20" max="200" value="80">
+                            <span class="slider-value" id="scaleLabel">80%</span>
+                        </div>
+                    </div>
+
+                    <button id="removeBgBtn" class="btn-remove-bg">✨ ลบพื้นหลัง (AI)</button>
+                    <div id="progressContainer" style="display:none; margin-top: 12px; height: 6px; background: #2f3d52; border-radius: 6px; overflow: hidden;">
+                        <div id="progressFill" style="height:100%; width:0%; background: linear-gradient(90deg, #6c5ce7, #2e8aff); transition: width 0.2s;"></div>
+                    </div>
+
+                    <div class="btn-group" style="margin-top: 12px;">
+                        <button id="resetBtn" class="btn-secondary">↺ รีเซ็ต</button>
+                        <button id="downloadBtn" class="btn-primary">💾 ดาวน์โหลด PNG</button>
+                    </div>
+
+                    <div class="info-row">
+                        <span><span class="dot"></span> ลากวัตถุได้</span>
+                        <span>🔄 ปรับขนาด</span>
+                        <span>⌨️ ลูกศร + Shift</span>
+                    </div>
+                    <div class="info-row" style="border-top: none; padding-top: 0; font-size: 12px; color: #5f748f;">
+                        <span>⏱️ พิมพ์ 1 เพื่อลบพื้นหลัง</span>
+                    </div>
+
+                    <div class="sample-grid" id="sampleGrid"></div>
+                </div>
+
+                <!-- ฝั่งขวา: Canvas Preview -->
+                <div class="preview">
+                    <div class="preview-header">
+                        <span class="title">📐 ตัวอย่าง</span>
+                        <span class="dim" id="dimDisplay">1200 × 1200</span>
+                    </div>
+                    <div class="canvas-wrap" id="canvasWrap">
+                        <canvas id="canvas" width="1200" height="1200"></canvas>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; width: 100%; margin-top: 12px; font-size: 13px; color: #6f84a0;">
+                        <span id="posDisplay">📍 ตำแหน่ง: —</span>
+                        <span id="sizeDisplay">📐 ขนาด: —</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast (ใช้ร่วมกัน) -->
+<div id="toast" class="toast">
+    <span class="emoji">✨</span>
+    <span id="toastMsg">Hello</span>
+</div>
+
+<!-- ===== JavaScript ===== -->
+<script src="js/video-editor.js"></script>
+<script src="js/ai-module.js"></script>
+<script src="js/image-editor.js"></script>
+<script src="js/remove-bg.js"></script>
+<script src="js/script1.js"></script>   <!-- ← เพิ่ม script1.js แล้ว -->
+
+<script>
+    // สลับแท็บ
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tab = this.dataset.tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab + '-tab').classList.add('active');
+
+            // เริ่มต้น Editor ตามแท็บ (ถ้าจำเป็น)
+            if (tab === 'video' && typeof window.initVideoEditor === 'function') {
+                if (!window._videoEditorInitialized) {
+                    window.initVideoEditor();
+                    window._videoEditorInitialized = true;
+                }
+            }
+            if (tab === 'image' && typeof window.initImageEditor === 'function') {
+                if (!window._imageEditorInitialized) {
+                    window.initImageEditor();
+                    window._imageEditorInitialized = true;
+                }
+            }
+            // BG Remover เริ่มต้นอัตโนมัติเมื่อ DOM โหลด (ใน remove-bg.js มี DOMContentLoaded)
+        });
+    });
+
+    // เริ่มต้นแท็บแรก (Video) อัตโนมัติ
+    window.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.initVideoEditor === 'function') {
+            window.initVideoEditor();
+            window._videoEditorInitialized = true;
+        }
+        // Image Editor จะเริ่มเมื่อคลิกแท็บ
+    });
+</script>
+
+</body>
+</html>
