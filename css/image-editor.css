@@ -1,5 +1,7 @@
 /* ===== image-editor.css ===== */
+/* แก้ไข: ปรับให้ปุ่มแนวตั้งอยู่ด้านซ้าย และปรับ responsive */
 
+/* ---- Container หลัก ---- */
 #image-tab .image-editor-container {
     display: flex;
     flex-direction: column;
@@ -7,13 +9,90 @@
     gap: 12px;
 }
 
+/* ---- แถวบน: toolbar + canvas + grid ---- */
 #image-tab .image-editor-top {
     display: flex;
-    gap: 16px;
+    flex-direction: row;        /* เปลี่ยนจาก column เป็น row */
+    gap: 12px;
     flex: 1;
     min-height: 0;
+    align-items: stretch;
 }
 
+/* ===== TOOLBAR แนวตั้งด้านซ้าย ===== */
+#image-tab #toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* ปุ่มเรียงจากบนลงล่าง */
+    width: 60px;
+    flex-shrink: 0;
+    background: #0e1422;
+    border-radius: 18px;
+    padding: 10px 4px;
+    gap: 6px;
+    border: 1px solid #1e2a3a;
+    margin: 0;
+    box-sizing: border-box;
+}
+#image-tab #toolbar button,
+#image-tab #toolbar select {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid #1e2a3a;
+    background: #141c2e;
+    color: #b0c8f0;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: 0.2s;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+#image-tab #toolbar button:hover {
+    background: #1f2d52;
+    border-color: #4f7cff;
+}
+#image-tab #toolbar button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+#image-tab #toolbar select {
+    width: 44px;
+    height: 44px;
+    font-size: 11px;
+    padding: 0 2px;
+    background: #141c2e;
+    color: #b0c8f0;
+    border-radius: 12px;
+    appearance: none;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #1e2a3a;
+}
+#image-tab #toolbar select option {
+    background: #0e1422;
+    color: #e8eeff;
+}
+#image-tab #toolbar #downloadBtn {
+    background: linear-gradient(135deg, #4f7cff, #6c5ce7);
+    color: #fff;
+    border: none;
+}
+#image-tab #toolbar #downloadBtn:hover {
+    transform: scale(1.05);
+}
+/* ปุ่ม crop และ reset transform */
+#image-tab #toolbar #cropBtn,
+#image-tab #toolbar #resetTransformBtn {
+    /* ใช้ style เดิม */
+}
+
+/* ---- Canvas Wrapper (ตรงกลาง) ---- */
 #image-tab .canvas-wrapper {
     flex: 2;
     background: #0e1422;
@@ -47,6 +126,7 @@
 }
 #image-tab .canvas-wrapper .image-overlay span { color: #cfdfff; }
 
+/* ---- Grid Wrapper (ขวา) ---- */
 #image-tab .grid-wrapper {
     flex: 1;
     background: #0e1422;
@@ -112,6 +192,7 @@
 }
 #image-tab .grid-footer button:hover { background: #1c2842; }
 
+/* ---- ส่วนล่าง (prompt + อัปโหลด) ---- */
 #image-tab .image-editor-bottom {
     display: flex;
     gap: 12px;
@@ -225,7 +306,7 @@
 #image-tab .upload-btn:hover { background: #1c2842; }
 #image-tab .upload-btn input { display: none; }
 
-/* Toast (ใช้ร่วมกัน) */
+/* ---- Toast (เดิม) ---- */
 .toast {
     position: fixed;
     bottom: 30px;
@@ -253,13 +334,41 @@
 }
 .toast .emoji { font-size: 20px; }
 
+/* ===================================== */
 /* ===== RESPONSIVE ===== */
+
 /* แท็บเล็ตและมือถือจอใหญ่ */
 @media (max-width: 900px) {
     #image-tab .image-editor-top {
-        flex-direction: column;
+        flex-direction: column;      /* เปลี่ยนกลับเป็น column */
         gap: 12px;
     }
+    /* Toolbar เปลี่ยนเป็นแนวนอน อยู่ด้านบน */
+    #image-tab #toolbar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: center;
+        padding: 8px 6px;
+        gap: 4px;
+        border-radius: 14px;
+        order: -1;                  /* ให้แสดงก่อน canvas */
+        background: #0e1422;
+        border: 1px solid #1e2a3a;
+    }
+    #image-tab #toolbar button,
+    #image-tab #toolbar select {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+    #image-tab #toolbar select {
+        width: 50px;
+        height: 40px;
+        font-size: 11px;
+    }
+    /* ส่วนอื่นๆ */
     #image-tab .canvas-wrapper {
         flex: 0 0 auto;
         min-height: 200px;
@@ -304,6 +413,23 @@
     }
     #image-tab .image-editor-top {
         gap: 8px;
+    }
+    #image-tab #toolbar {
+        padding: 6px 4px;
+        gap: 3px;
+        border-radius: 12px;
+    }
+    #image-tab #toolbar button,
+    #image-tab #toolbar select {
+        width: 34px;
+        height: 34px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+    #image-tab #toolbar select {
+        width: 44px;
+        height: 34px;
+        font-size: 10px;
     }
     #image-tab .canvas-wrapper {
         min-height: 140px;
